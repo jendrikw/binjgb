@@ -10,6 +10,7 @@
 
 #include <array>
 #include <string>
+#include <vector>
 
 #include "imgui.h"
 #include "imgui_memory_editor.h"
@@ -88,6 +89,9 @@ class Debugger {
     return 0x8000 + GetTileIndexInBank(tile_index) * 16;
   }
 
+  void ReadSymFile();
+  void ParseSymFile(FileData file_data);
+
   EmulatorInit emulator_init;
   HostInit host_init;
   Emulator* e = nullptr;
@@ -95,6 +99,7 @@ class Debugger {
   const char* save_filename = nullptr;
   const char* save_state_filename = nullptr;
   const char* rom_usage_filename = nullptr;
+  const char* sym_filename = nullptr;
 
   enum RunState {
     Exiting,
@@ -118,6 +123,12 @@ class Debugger {
   int highlight_obj_index = 0;
   bool highlight_tile = false;
   int highlight_tile_index = 0;
+
+  struct Label {
+    Address addr;
+    std::string label;
+  };
+  std::vector<Label> labels;
 
   struct Window {
     explicit Window(Debugger* d) : d(d) {}

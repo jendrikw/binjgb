@@ -10,7 +10,9 @@
 
 #include <algorithm>
 #include <string>
+#include <sstream>
 #include <utility>
+#include <regex>
 
 #include "imgui.h"
 #include "imgui-helpers.h"
@@ -20,6 +22,7 @@
 #define SAVE_EXTENSION ".sav"
 #define SAVE_STATE_EXTENSION ".state"
 #define ROM_USAGE_EXTENSION ".romusage"
+#define SYM_EXTENSION ".sym"
 
 void Debugger::SetPaletteAndEnable(ImDrawList* draw_list,
                                    const PaletteRGBA& palette) {
@@ -176,8 +179,11 @@ bool Debugger::Init(const char* filename, int audio_frequency, int audio_frames,
   save_filename = replace_extension(filename, SAVE_EXTENSION);
   save_state_filename = replace_extension(filename, SAVE_STATE_EXTENSION);
   rom_usage_filename = replace_extension(filename, ROM_USAGE_EXTENSION);
+  sym_filename = replace_extension(filename, SYM_EXTENSION);
 
   is_cgb = emulator_is_cgb(e);
+
+  ReadSymFile();
 
   return true;
 }
@@ -488,4 +494,35 @@ void Debugger::AutoRewind(f64 delta_ms) {
 void Debugger::RewindTo(Ticks ticks) {
   host_rewind_to_ticks(host, ticks);
   host_reset_audio(host);
+}
+
+void Debugger::ReadSymFile() {
+  FileData file_data;
+  ZERO_MEMORY(file_data);
+  CHECK(SUCCESS(file_read(sym_filename, &file_data)));
+  ParseSymFile(file_data);
+error:
+  file_data_delete(&file_data);
+}
+
+void Debugger::ParseSymFile(FileData file_data) {
+  std::string input((char*) file_data.data, file_data.size); // TODO find a better way
+  std::istringstream iss(input);
+  for (std::string line; std::getline(iss, line); ) {
+    // the regexes are from https://github.com/rednex/rgbds/issues/483#issuecomment-586030564
+    if (std::regex_match(line, std::regex("\t*(;.*)?"))) {
+      continue;
+    }
+    std::smatch matches;
+    if (std::regex_match(line, matches, std::regex("[ \t]*([0-9a-fA-F]{2,}):([0-9a-fA-F]{4})[ \t]+(.*)[ \t]*"))) {
+      std::string bank = matches[1];
+      std::string address_hex = matches[2];
+      std::string label = matches[3];
+      Address a = std::stoi(address_hex, 0, 16);
+      struct Label l = {a, label};
+      labels.push_back(l);
+    } else {
+      PRINT_ERROR("invalid line in sym file: %s", line.c_str());
+    }
+  }
 }
