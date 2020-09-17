@@ -519,8 +519,7 @@ void Debugger::ParseSymFile(FileData file_data) {
       std::string address_hex = matches[2];
       std::string label = matches[3];
       Address a = std::stoi(address_hex, 0, 16);
-      struct Label l = {a, label};
-      labels.push_back(l);
+      labels[a] = label;
     } else {
       PRINT_ERROR("invalid line in sym file: %s", line.c_str());
     }

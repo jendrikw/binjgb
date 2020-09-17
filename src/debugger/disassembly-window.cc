@@ -269,10 +269,25 @@ void Debugger::DisassemblyWindow::Tick() {
 
         char buffer[64];
         emulator_disassemble(d->e, addr, buffer, sizeof(buffer));
-        if (addr == regs.PC) {
-          ImGui::TextColored(kPCColor, "%s", buffer);
+
+        const char *disassembly;
+
+        auto label_it = d->labels.find(addr);
+        if (label_it != d->labels.end()) {
+          const char *label = label_it->second.c_str();
+          char buffer2[64];
+          strcat(buffer2, label);
+          strcat(buffer2, ": ");
+          strcat(buffer2, buffer);
+          disassembly = buffer2;
         } else {
-          ImGui::Text("%s", buffer);
+          disassembly = buffer;
+        }
+
+        if (addr == regs.PC) {
+          ImGui::TextColored(kPCColor, "%s", disassembly);
+        } else {
+          ImGui::Text("%s", disassembly);
         }
       }
     }

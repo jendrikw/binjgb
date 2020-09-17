@@ -10,7 +10,7 @@
 
 #include <array>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 #include "imgui.h"
 #include "imgui_memory_editor.h"
@@ -124,11 +124,7 @@ class Debugger {
   bool highlight_tile = false;
   int highlight_tile_index = 0;
 
-  struct Label {
-    Address addr;
-    std::string label;
-  };
-  std::vector<Label> labels;
+  std::unordered_map<Address, std::string> labels;
 
   struct Window {
     explicit Window(Debugger* d) : d(d) {}

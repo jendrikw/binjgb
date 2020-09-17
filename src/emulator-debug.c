@@ -350,19 +350,7 @@ int emulator_disassemble(Emulator* e, Address addr, char* buffer, size_t size) {
     sprint_hex(bank, e->state.memory_map_state.rom_base[1] >> ROM_BANK_SHIFT);
   }
 
-  // show a label if the sym file contains one
-  int written;
-  if ((addr % 0x100) == 0) {
-    written = snprintf(buffer, size, "%s: (%#06x)", "mylabel", addr);
-  } else {
-    written = snprintf(buffer, size, " [%s]%#06x:", bank, addr);
-  }
-  const int address_column_width = 25;
-  if (written < address_column_width) {
-    // write address_column_width-written spaces
-    written += snprintf(buffer + written, size - written, "%*s", address_column_width - written, " ");
-  }
-  snprintf(buffer + written, size - written, "%s", instr);
+  snprintf(buffer, size, "[%s]%#06x: %s", bank, addr, instr);
   return num_bytes ? num_bytes : 1;
 }
 
